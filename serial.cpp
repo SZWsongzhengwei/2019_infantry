@@ -1,6 +1,6 @@
 #include "serial.h"
 
-float_char transform;//transform hex and float
+float_char angle_transform;//transform hex and float
 
 //互斥锁
 serial_data serial;
@@ -26,6 +26,8 @@ void * thread_serial(void *arg)
    char cut_buff[11];//临时储存被截断的数据字节
    int cut_num = 0;//被截断的字节个数
    int temp_num = 0;//储存字节中0xA5后面的字节的数量，包括0xA5，用于判断字节是否完整
+   int recive_angle_buff_num = ANGLE_BUFF_NUM*2;
+   vector<float> recive_angle_buff(recive_angle_buff_num, 0);
 
    //储存提取的数据，用于校验
    char temp_status[4];
@@ -133,19 +135,23 @@ void * thread_serial(void *arg)
                                //开始校验
                                if(check_sum(temp_angle, 11) == 1)
                                {
-                                   //将16进制转化为float
-                                   transform.ch[0] = temp_angle[2];
-                                   transform.ch[1] = temp_angle[3];
-                                   transform.ch[2] = temp_angle[4];
-                                   transform.ch[3] = temp_angle[5];
-                                   temp_serial.recive_angle[0] = transform.fl;
-                                   transform.ch[0] = temp_angle[6];
-                                   transform.ch[1] = temp_angle[7];
-                                   transform.ch[2] = temp_angle[8];
-                                   transform.ch[3] = temp_angle[9];
-                                   temp_serial.recive_angle[1] = transform.fl;
 
-                                   //test 表明收到了角度数据
+                                   //将16进制转化为float
+
+                                   angle_transform.ch[0] = temp_angle[2];
+                                   angle_transform.ch[1] = temp_angle[3];
+                                   angle_transform.ch[2] = temp_angle[4];
+                                   angle_transform.ch[3] = temp_angle[5];
+                                   recive_angle_buff.insert(recive_angle_buff.begin()+0, angle_transform.fl);
+                                   angle_transform.ch[0] = temp_angle[6];
+                                   angle_transform.ch[1] = temp_angle[7];
+                                   angle_transform.ch[2] = temp_angle[8];
+                                   angle_transform.ch[3] = temp_angle[9];
+                                   recive_angle_buff.insert(recive_angle_buff.begin()+1, angle_transform.fl);
+                                   recive_angle_buff.resize(recive_angle_buff_num);
+                                   temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
+                                   temp_serial.recive_angle[1] = recive_angle_buff[recive_angle_buff_num-1];
+
 
                                }
                            }
@@ -293,23 +299,22 @@ bool check_sum(char data[], int lenth)
 void send_angle(int fd, float s_angle[2])
 {
 
-    cout<<"send...."<<endl;
    char send_char[11];
 
    send_char[0] = 0xA5;
    send_char[1] = 0x03;//angle坐标的ID
 
-   transform.fl = s_angle[0];
-   send_char[2] = transform.ch[0];
-   send_char[3] = transform.ch[1];
-   send_char[4] = transform.ch[2];
-   send_char[5] = transform.ch[3];
+   angle_transform.fl = s_angle[0];
+   send_char[2] = angle_transform.ch[0];
+   send_char[3] = angle_transform.ch[1];
+   send_char[4] = angle_transform.ch[2];
+   send_char[5] = angle_transform.ch[3];
 
-   transform.fl = s_angle[1];
-   send_char[6] = transform.ch[0];
-   send_char[7] = transform.ch[1];
-   send_char[8] = transform.ch[2];
-   send_char[9] = transform.ch[3];
+   angle_transform.fl = s_angle[1];
+   send_char[6] = angle_transform.ch[0];
+   send_char[7] = angle_transform.ch[1];
+   send_char[8] = angle_transform.ch[2];
+   send_char[9] = angle_transform.ch[3];
 
    //设置和校验位
    int sum = 0;

@@ -73,7 +73,7 @@ int main()
 
 
 
-            graph(M_graph, pitch0, pitch1, num);
+            graph(M_graph, yaw0, yaw1, num);
 
         }
         //cout<<exp<<endl;
