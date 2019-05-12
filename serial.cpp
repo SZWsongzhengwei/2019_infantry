@@ -152,7 +152,6 @@ void * thread_serial(void *arg)
                                    temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
                                    temp_serial.recive_angle[1] = recive_angle_buff[recive_angle_buff_num-1];
 
-
                                }
                            }
                            else

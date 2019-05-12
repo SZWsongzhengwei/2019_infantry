@@ -35,7 +35,9 @@ Point2f angle_solve(vector<Point2f> amor_4points, float &yaw, float &pitch)
 
     }
     double distance = distance_solve(max_pixel_distance);
+    //double distance = 1000;
     Point2f target_point = target_solve(distance);
+
 
     Point2f amor_point;//装甲板中心点
     amor_point.x = (amor_4points[0].x + amor_4points[1].x + amor_4points[2].x + amor_4points[3].x) / 4;

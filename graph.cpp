@@ -23,15 +23,12 @@ void graph(Mat src, float yaw, float pitch, int &num)
     circle(src, target_pitch, 1, Scalar(0, 255, 0), -1, CV_AA, 0);
 
     num +=2;
-
-
-
 }
 
 void flash_graph(Mat src)
 {
     src = Scalar(255, 255, 255);
-
+    cout<<"561"<<endl;
     //XY
     line(src, Point(0, 360), Point(1199, 360), Scalar(0, 0, 0), 1);
     line(src, Point(25, 0), Point(25, 699), Scalar(0, 0, 0), 1);
