@@ -1,0 +1,98 @@
+#ifndef ANGLESOLVE1_H
+#define ANGLESOLVE1_H
+
+#define LIGHT_LENGTH 60;//装甲板灯条的实际物理高度
+#define CAMERA_HEIGHT 0;//相机的光轴距离炮管的高度
+
+#include<opencv2/opencv.hpp>
+#include<iostream>
+
+using namespace cv;
+using namespace std;
+
+void angle_solve(vector<Point2f> amor_4points1, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标
+*@yaw double类型 存放计算得到的yaw轴角度
+*@pitch double类型 存放计算得到的pitch轴角度
+*/
+Point2f target_solve(double distance);
+/*@brief 计算目标位置的像素坐标
+*@param distance double类型 装甲板距离相机的距离，单位为mm
+*@return void
+*/
+*@param amor_4points vector<Point2f>类型 装甲板在图像中的四个角的像素坐标，从左下角顺时针
+*@return double类型 返回距离，单位为mm
+*/
+
+Point2f target_solve(double distance);
+/*@brief 计算目标位置的像素坐标
+*@param distance double类型 装甲板距离相机的距离，单位为mm
+*@return void
+*/
+
+
+double distance_solve(vector<Point2f> amor_4points2);
+/*@brief 粗略计算装甲板距离相机的距离nts1, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+using namespace cv;
+using namespace std;
+
+void angle_solve(vector<Point2f> amor_4points1
+using namespace cv;
+using namespace std;
+
+void angle_solve(vector<Point2f> amor_4points1, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标
+*@yaw double类型 存放计算得到的yaw轴角度
+*@pitch double类型 存放计算得到的pitch轴角度
+*/
+
+double distance_solve(vector<Point2f> amor_4points2);
+/*@brief 粗略计算装甲板距离相机的距离nts1, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标
+*@yaw double类型 存放计算得到的yaw轴角度
+*@pitch double类型 存放计算得到的pitch轴角度
+*/
+
+double distance_solve(vector<Point2f> amor_4points2);
+/*@brief 粗略计算装甲板距离相机的距离nts1, double& yaw, double& pitch);
+/*@brief 计算云台需要移动的角度
+*@param target_point Point2f类型 目标位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标
+*@param amor_point Point2f类型 实际位置的像素坐标
+*@yaw double类型 存放计算得到的yaw轴角度
+*@pitch double类型 存放计算得到的pitch轴角度
+*/
+
+double distance_solve(vector<Point2f> amor_4points2);
+/*@brief 粗略计算装甲板距离相机的距离
+*@param amor_4points vector<Point2f>类型 装甲板在图像中的四个角的像素坐标，从左下角顺时针
+*@return double类型 返回距离，单位为mm
+*/
+
+Point2f target_solve(double distance);
+/*@brief 计算目标位置的像素坐标
+*@param distance double类型 装甲板距离相机的距离，单位为mm
+*@return void
+*/
+*@param amor_4points vector<Point2f>类型 装甲板在图像中的四个角的像素坐标，从左下角顺时针
+*@return double类型 返回距离，单位为mm
+*/
+
+Point2f target_solve(double distance);
+/*@brief 计算目标位置的像素坐标
+*@param distance double类型 装甲板距离相机的距离，单位为mm
+*@return void
+*/
+
+#endif // ANGLESOLVE1_H
