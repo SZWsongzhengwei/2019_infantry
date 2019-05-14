@@ -8,7 +8,7 @@ using namespace cv;
 using namespace std;
 
 
-void graph(Mat src, float yaw, float pitch, int &num);
+void graph(Mat src, float yaw0, float yaw1, float yaw_pre, int &num);
 
 void flash_graph(Mat src);
 

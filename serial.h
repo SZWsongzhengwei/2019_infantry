@@ -14,7 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 #define UART_DEVICE "/dev/ttyUSB0"
-#define ANGLE_BUFF_NUM 6  //缓存角度的个数，读取的是之前的多少个的角度
+#define ANGLE_BUFF_NUM  27 //缓存角度的个数，读取的是之前的多少个的角度
 
 using namespace std;
 using namespace cv;
@@ -29,8 +29,9 @@ struct serial_data
 {
     char status;//机器人的状态  静默(0x00)和单目辅助瞄准(0x01) ID为0x01
     char color;//己方阵营颜色  红(0x01)和蓝(0x02) ID为0x02
-    float send_angle[2];//要发送的角度信息 yaw,pitch
     float recive_angle[2];//接受到的角度信息 ID为0x03
+    float solve_angle[2];//解算出的角度，为相对值
+    float send_angle[2];//要发送的角度信息 yaw,pitch
 };
 
 //互斥锁

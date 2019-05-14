@@ -1,7 +1,7 @@
 #include "ArmorFind.h"
 #include "ArmorSet.h"
 #include <math.h>
-#define hsv_threshold 110
+#define hsv_threshold 100
 Armorfind::Armorfind()
 {
 }
@@ -53,8 +53,8 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray)
    //resize(src, src, Size(1280, 720));
   imshow("picutre_text1",src);
   //imshow("picutre_text2", img_gray);
-//imshow("picutre_text3", text1);
-    //imshow("picutre_text4", text2);
+  //imshow("picutre_text3", text1);
+  //  imshow("picutre_text4", text2);
     armorclear();
     return armor_points;
 
@@ -95,7 +95,7 @@ vector<RotatedRect> Armorfind::ArmorRects(Mat src, vector<vector<Point>> Armorco
         {
             cout1 ++;
           bool Armorflags ;
-            if (contour.size() > 10 && contour.size() < 400)//面积约束
+            if (contour.size() > 10 && contour.size() < 300)//面积约束
             {
                 s_fitEllipse = fitEllipse(contour);//椭圆
                 s_minAreaRect = minAreaRect(contour);//最小外接旋转矩形
@@ -110,11 +110,11 @@ vector<RotatedRect> Armorfind::ArmorRects(Mat src, vector<vector<Point>> Armorco
 
                 if (s.size.width / s.size.height > 0.1)
                 {
-                    if (s_fitEllipse.size.area() / s.size.area() > AST::light_min_areas)//面积和长度比的约束
+                   if (s_fitEllipse.size.area() / s.size.area() > AST::light_min_areas)//面积和长度比的约束
                     {
-             //           if (s_fitEllipse.size.height > 5 )
+                        if (s_fitEllipse.size.height > 5 )
                         {
-                        if (Armorflags)
+                  //   if (Armorflags)
                             {
                                 ArmorRect.push_back(s);
                             }
@@ -198,14 +198,14 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
            // cout << "light_angle：" << armor_angle << endl;
       //      cout << "light_angles：" << angle_dis << endl;
             /*确认装甲对的大小及装甲a对的长宽是否正确*/
-
-
-                  if (angle_dis<10)//平行度
-                    {
-                      if((dis>1.1&&dis<6))
-                          {
-                         if(area_size>0.2&&area_size<5)
+ if(AST::Mode == 0)
 {
+                  if (angle_dis<5)//平行度
+                    {
+                     if((dis>1.1&&dis<6))
+                          {
+                                 if(area_size>0.2&&area_size<5)
+                     {
 
                                   realarmor.first = ArmorRect[NI];
                                   realarmor.second = ArmorRect[NL];
@@ -214,14 +214,31 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
 
                         }
                     }
-
+}
             }
-        }
+       else  if(AST::Mode == 1)
+ {
+                   if (angle_dis<10)//平行度
+                     {
+                      if((dis>1.1&&dis<6))
+                           {
+                                  if(area_size>0.2&&area_size<5)
+                      {
+
+                                   realarmor.first = ArmorRect[NI];
+                                   realarmor.second = ArmorRect[NL];
+                                   RectChoose.push_back(realarmor);
+
+
+                         }
+                     }
+ }
+                }
     }
 
                 }
 }
-
+}
     if (RectChoose.empty())
         return 0;
     else
@@ -264,6 +281,8 @@ void Armorfind::RectArmor(Mat src,vector<Point2f>points)
             line(src, points[i], points[(i + 1) % 4], Scalar(0, 255, 255), 1, 8, 0);
         }
     }
+   else
+        cout<<"nmsl"<<endl;
 }
 /*
 * @brief 画出矩形/调试
@@ -280,7 +299,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         R = src.at<Vec3b>(pt)[2];
         if (AST::Mode == 0)
         {
-            if ((B - R > 10)&&G<150)
+            if ((B - R > 0)&&(G<250))
             {
                 return 1;
             }
@@ -291,7 +310,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         }
         else if (AST::Mode == 1)
         {
-            if (R-B>10)
+            if( (R-B>10) &&(G<200))
             {
                 return 1;
             }
@@ -473,8 +492,8 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss)//装甲板
     vector<Point2f> last_armor;
     vector<Point2f> lol;
     float best_grade = 0;
-    Point2f zzu[4];
-    int T_L = 10000, T_R = 0, L_L = 10000, L_R = 0;
+   // Point2f zzu[4];
+    //int T_L = 10000, T_R = 0, L_L = 10000, L_R = 0;
 
     if (ptss.size() > 0)
     {
@@ -486,10 +505,10 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss)//装甲板
             cout << "第" << i << "个:" << ptss[i].size() << endl;
             if (ptss[i].size() == 4)
             {
-                float rect_index = 0;//矩形参数
+                //float rect_index = 0;//矩形参数
                 float parallel_index = 0;//平行参数
                 float area_index = 0;//mj参数
-                float lwr_index = 0;//长宽比参数
+              //  float lwr_index = 0;//长宽比参数
 
 
                 /*矩形拟合参数*/
@@ -524,7 +543,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss)//装甲板
                 width_12 = ptss[i][2].x - ptss[i][1].x;
                 height_23 = ptss[i][3].y - ptss[i][2].y;
                 width_30 = ptss[i][3].x - ptss[i][0].x;
-                parallel_index =(width_12/height_01+width_12/height_23+width_30/height_01+width_30/height_23)/4;
+                parallel_index =min(min(width_12/height_01,width_12/height_23),min(width_30/height_01,width_30/height_23));
 
 
 
@@ -550,7 +569,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss)//装甲板
 
                 if (Grade > best_grade)
                 {
-                    if(parallel_index>1&&parallel_index<5)
+                   if(parallel_index>1&&parallel_index<3.5)
                     {
                     j=i;
                     best_grade = Grade;

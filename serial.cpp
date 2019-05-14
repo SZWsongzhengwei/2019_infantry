@@ -12,10 +12,29 @@ void * thread_serial(void *arg)
    serial_data temp_serial;
    temp_serial.status = 0x00;
    temp_serial.color = 0x00;
-   temp_serial.send_angle[0] = 0;
-   temp_serial.send_angle[1] = 0;
+   temp_serial.solve_angle[0] = 0;
+   temp_serial.solve_angle[1] = 0;
    temp_serial.recive_angle[0] = 0;
    temp_serial.recive_angle[1] = 0;
+   temp_serial.send_angle[0] = 0;
+   temp_serial.send_angle[1] = 0;
+
+   RNG rng;
+   const int stateNum=4;
+   const int measureNum=2;
+   KalmanFilter KF(stateNum, measureNum, 0);
+   KF.transitionMatrix = (Mat_<float>(4,4) << 1,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1);
+   setIdentity(KF.measurementMatrix);
+   setIdentity(KF.processNoiseCov, Scalar::all(1e-5));
+   setIdentity(KF.measurementNoiseCov, Scalar::all(1e-1));
+   setIdentity(KF.errorCovPost, Scalar::all(1));
+   rng.fill(KF.statePost, RNG::UNIFORM,-10,10);
+   Mat measurement = Mat::zeros(measureNum, 1, CV_32F);
+
+   float yaw0, pitch0;
+   float yaw, pitch;
+   float yaw1, pitch1;//要发送的角度（未滤波）
+   float yaw_state, pitch_state;//滤波后的角度
 
    int fd = init_uart();//初始化串口
 
@@ -34,15 +53,27 @@ void * thread_serial(void *arg)
    char temp_color[4];
    char temp_angle[11];
 
+   int i = 0;
    while(1)
    {
+       cout<<i<<endl;
+       i++;
        //检查角度更新，若更新则需要发送
        pthread_mutex_lock(&mutex);
-       if(temp_serial.send_angle[0] != serial.send_angle[0] || temp_serial.send_angle[1] != serial.send_angle[1])
+       if(abs(temp_serial.solve_angle[0] - serial.solve_angle[0]) > 0.1 || abs(temp_serial.solve_angle[1] - serial.solve_angle[1]) > 0.1)
        {
-           temp_serial.send_angle[0] = serial.send_angle[0];
-           temp_serial.send_angle[1] = serial.send_angle[1];
+           temp_serial.solve_angle[0] = serial.solve_angle[0];
+           temp_serial.solve_angle[1] = serial.solve_angle[1];
            pthread_mutex_unlock(&mutex);
+
+           yaw1 = temp_serial.recive_angle[0]+temp_serial.solve_angle[0];
+           pitch1 = temp_serial.recive_angle[1]+temp_serial.solve_angle[1];
+
+           measurement.at<float>(0) = yaw1;
+           measurement.at<float>(1) = pitch1;
+           KF.correct(measurement);
+           temp_serial.send_angle[0] = KF.statePost.at<float>(0);
+           temp_serial.send_angle[1] = KF.statePost.at<float>(1);
            send_angle(fd, temp_serial.send_angle);
        }
        else
@@ -232,10 +263,12 @@ int init_uart()
    //modern
    options.c_lflag &=~ (ICANON|ECHO|ECHOE|ISIG);//取消规范模式 取消本地回显 收到信号字符不会处理
    options.c_cflag &=~(INLCR|ICRNL);//不转换回车和换行
+   options.c_cflag &=~(IXON);
    options.c_oflag &=~OPOST;//不处理直接输出
    options.c_oflag &=~(ONLCR|OCRNL);//不转换回车和换行
    options.c_iflag &=~(ICRNL|INLCR);//不转换回车和换行
-   //options.c_cflag |=CLOCAL;
+   options.c_iflag &=~(IXON|IXOFF|IXANY);
+   options.c_cflag |=(CLOCAL|CREAD);
 
    tcsetattr(fd, TCSANOW, &options);
 
@@ -245,8 +278,8 @@ int init_uart()
 void updata_angle(float yaw, float pitch)
 {
    pthread_mutex_lock(&mutex);
-   serial.send_angle[0] = yaw;
-   serial.send_angle[1] = pitch;
+   serial.solve_angle[0] = yaw;
+   serial.solve_angle[1] = pitch;
 
    pthread_mutex_unlock(&mutex);
 }
@@ -297,7 +330,6 @@ bool check_sum(char data[], int lenth)
 
 void send_angle(int fd, float s_angle[2])
 {
-
    char send_char[11];
 
    send_char[0] = 0xA5;
@@ -315,7 +347,7 @@ void send_angle(int fd, float s_angle[2])
    send_char[8] = angle_transform.ch[2];
    send_char[9] = angle_transform.ch[3];
 
-   //设置和校验位
+   //设置和校验位r
    int sum = 0;
    for(int i = 0; i<10; i++)
    {
@@ -323,8 +355,7 @@ void send_angle(int fd, float s_angle[2])
    }
    send_char[10] = sum&0xFF;
 
-   write(fd, send_char, 11);
 
-   //cout<<write_num<<endl;
+    write(fd, send_char, 11);
 }
 
