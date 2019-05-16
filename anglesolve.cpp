@@ -64,7 +64,7 @@ double distance_solve(double pixel_distance)
     double object_distance = LIGHT_LENGTH;
     //小孔成像原理测距
     double distance = (fy * object_distance) / pixel_distance;
-    cout <<"distance:"<< distance << endl;
+    //cout <<"distance:"<< distance << endl;
     return distance;
 }
 

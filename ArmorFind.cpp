@@ -19,6 +19,10 @@ Armorfind::~Armorfind()
 vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray)
 {
 
+    namedWindow("picutre_text1");
+    //namedWindow("picutre_text2");
+    //namedWindow("picutre_text3");
+    //namedWindow("picutre_text4");
         Mat text(480, 640,CV_8UC1,Scalar(0));
         Mat text1(480, 640, CV_8UC1, Scalar(0));
         Mat text2(480, 640, CV_8UC1, Scalar(0));
@@ -54,7 +58,7 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray)
   imshow("picutre_text1",src);
   //imshow("picutre_text2", img_gray);
   //imshow("picutre_text3", text1);
-  //  imshow("picutre_text4", text2);
+  //imshow("picutre_text4", text2);
     armorclear();
     return armor_points;
 

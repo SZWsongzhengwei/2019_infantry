@@ -1,4 +1,5 @@
 #include "serial.h"
+#include "graph.h"
 
 float_char angle_transform;//transform hex and float
 
@@ -8,6 +9,10 @@ pthread_mutex_t mutex;
 
 void * thread_serial(void *arg)
 {
+
+    int num = 25;
+    Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
+    namedWindow("graph");
 
    serial_data temp_serial;
    temp_serial.status = 0x00;
@@ -26,15 +31,15 @@ void * thread_serial(void *arg)
    KF.transitionMatrix = (Mat_<float>(4,4) << 1,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1);
    setIdentity(KF.measurementMatrix);
    setIdentity(KF.processNoiseCov, Scalar::all(1e-5));
-   setIdentity(KF.measurementNoiseCov, Scalar::all(1e-1));
+   setIdentity(KF.measurementNoiseCov, Scalar::all(1e-2));
    setIdentity(KF.errorCovPost, Scalar::all(1));
    rng.fill(KF.statePost, RNG::UNIFORM,-10,10);
    Mat measurement = Mat::zeros(measureNum, 1, CV_32F);
 
-   float yaw0, pitch0;
-   float yaw, pitch;
    float yaw1, pitch1;//要发送的角度（未滤波）
-   float yaw_state, pitch_state;//滤波后的角度
+   float yaw0, pitch0;//储存最新的角度
+   yaw0 = 0;
+   pitch0 = 0;
 
    int fd = init_uart();//初始化串口
 
@@ -53,33 +58,44 @@ void * thread_serial(void *arg)
    char temp_color[4];
    char temp_angle[11];
 
-   int i = 0;
+
    while(1)
    {
-       cout<<i<<endl;
-       i++;
+       const int64 start = getTickCount();
        //检查角度更新，若更新则需要发送
        pthread_mutex_lock(&mutex);
-       if(abs(temp_serial.solve_angle[0] - serial.solve_angle[0]) > 0.1 || abs(temp_serial.solve_angle[1] - serial.solve_angle[1]) > 0.1)
+       if(temp_serial.solve_angle[0] != serial.solve_angle[0] || abs(temp_serial.solve_angle[1] != serial.solve_angle[1]) > 0.1)
        {
+           KF.predict();
            temp_serial.solve_angle[0] = serial.solve_angle[0];
            temp_serial.solve_angle[1] = serial.solve_angle[1];
            pthread_mutex_unlock(&mutex);
 
            yaw1 = temp_serial.recive_angle[0]+temp_serial.solve_angle[0];
            pitch1 = temp_serial.recive_angle[1]+temp_serial.solve_angle[1];
-
            measurement.at<float>(0) = yaw1;
            measurement.at<float>(1) = pitch1;
            KF.correct(measurement);
+
            temp_serial.send_angle[0] = KF.statePost.at<float>(0);
            temp_serial.send_angle[1] = KF.statePost.at<float>(1);
            send_angle(fd, temp_serial.send_angle);
+
+           //graph(M_graph, yaw0, temp_serial.send_angle[0], yaw1, num);
+           //imshow("graph", M_graph);
+
        }
        else
        {
            pthread_mutex_unlock(&mutex);
        }
+
+
+       //cout << "recive:  yaw: " << temp_serial.recive_angle[0] << " pitch: " << temp_serial.solve_angle[0] << endl;
+       //cout << "solve:  yaw: " << temp_serial.solve_angle[0]<< " pitch: " << temp_serial.solve_angle[1] << endl;
+       //cout << "send:  yaw: " << temp_serial.send_angle[0] << " pitch: " << temp_serial.send_angle[0] << endl;
+       //cout << "send:  yaw: " << yaw1 << " pitch: " << pitch1 << endl;
+
 
        //将读到的字节存进缓冲区，如果缓冲区有遗留字节则直接在后面加上
        read_num = read(fd, read_buff, 15);
@@ -173,11 +189,13 @@ void * thread_serial(void *arg)
                                    angle_transform.ch[1] = temp_angle[3];
                                    angle_transform.ch[2] = temp_angle[4];
                                    angle_transform.ch[3] = temp_angle[5];
+                                   yaw0 = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+0, angle_transform.fl);
                                    angle_transform.ch[0] = temp_angle[6];
                                    angle_transform.ch[1] = temp_angle[7];
                                    angle_transform.ch[2] = temp_angle[8];
                                    angle_transform.ch[3] = temp_angle[9];
+                                   pitch0 = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+1, angle_transform.fl);
                                    recive_angle_buff.resize(recive_angle_buff_num);
                                    temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
@@ -224,6 +242,8 @@ void * thread_serial(void *arg)
            deal_num = cut_num;
            cut_num = 0;
        }
+       double duration =(getTickCount()-start)/getTickFrequency()*1000;
+       //cout<<duration<<endl;
    }
    return (void*)0;
 }
@@ -280,7 +300,6 @@ void updata_angle(float yaw, float pitch)
    pthread_mutex_lock(&mutex);
    serial.solve_angle[0] = yaw;
    serial.solve_angle[1] = pitch;
-
    pthread_mutex_unlock(&mutex);
 }
 

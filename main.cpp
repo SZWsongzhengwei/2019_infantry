@@ -28,7 +28,7 @@ int main()
 
     float yaw, pitch;
     Point2f center_point;
-    AST::Mode = 0;
+    AST::Mode = 1;
     AST::capmode = 1;
 
     RMVideoCapture cap("/dev/video0",3);
@@ -53,7 +53,6 @@ int main()
             center_point = angle_solve(points, yaw, pitch);
             updata_angle(yaw, pitch);
 
-
             //cout << "recive:  yaw0: " << yaw0 << " pitch0: " << pitch0 << endl;
             //cout << "solve:  yaw: " << yaw << " pitch: " << pitch << endl;
             //cout << "send:  yaw1: " << yaw1 << " pitch1: " << pitch1 << endl;
@@ -66,8 +65,8 @@ int main()
         //cout<<exp<<endl;
         //imshow("graph", M_graph);
         double duration =1/((getTickCount()-start)/getTickFrequency());
-        //cout<<duration<<endl;
-        if((char)waitKey(10)=='q')
+        cout<<duration<<endl;
+        if((char)waitKey(5)=='q')
         {
             //cap.closeStream();
             break;

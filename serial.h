@@ -14,7 +14,7 @@
 #include <opencv2/opencv.hpp>
 
 #define UART_DEVICE "/dev/ttyUSB0"
-#define ANGLE_BUFF_NUM  27 //缓存角度的个数，读取的是之前的多少个的角度
+#define ANGLE_BUFF_NUM  20 //缓存角度的个数，读取的是之前的多少个的角度
 
 using namespace std;
 using namespace cv;

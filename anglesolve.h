@@ -1,7 +1,7 @@
 #ifndef ANGLESOLVE_H
 #define ANGLESOLVE_H
 #define LIGHT_LENGTH 140;//装甲板灯条的实际物理高度
-#define CAMERA_HEIGHT 120;//相机的光轴距离炮管的高度
+#define CAMERA_HEIGHT 100;//相机的光轴距离炮管的高度
 #define FIX_X 6;
 
 #include<opencv2/opencv.hpp>
