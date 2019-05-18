@@ -36,7 +36,7 @@ private:
     vector<Point2f> last_armor;
     const double PI = 3.142857142857;
 public:
-    vector<Point2f> Armorfinds(Mat src, Mat img_hsv, Mat img_gray);//	RGB二值化
+    vector<Point2f> Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &labels);//	RGB二值化
     void armorclear();
     vector<Point2f>  high_choose(vector<RotatedRect>  real,Mat& src);	//获得装甲板的bestchoose
     Armorfind();
@@ -55,7 +55,7 @@ private:
     float sqrt_fast(float x);//快速开方算法
     float distances(Point2f pt1, Point2f pt2);
     vector<Point2f>  high_choose(vector<vector<Point2f>> ptss);	//获得装甲板的bestchoose
-    vector<Point2f> high_chooses(vector<vector<Point2f>> ptss);
+    vector<Point2f> high_chooses(vector<vector<Point2f>> ptss,bool &armor_label);
     bool Armorstrict_rect(Mat src, vector<RotatedRect> ArmorRect);
 };
 

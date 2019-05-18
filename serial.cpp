@@ -10,9 +10,9 @@ pthread_mutex_t mutex;
 void * thread_serial(void *arg)
 {
 
-    int num = 25;
-    Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
-    namedWindow("graph");
+    //int num = 25;
+    //Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
+    //namedWindow("graph");
 
    serial_data temp_serial;
    temp_serial.status = 0x00;
@@ -35,11 +35,10 @@ void * thread_serial(void *arg)
    setIdentity(KF.errorCovPost, Scalar::all(1));
    rng.fill(KF.statePost, RNG::UNIFORM,-10,10);
    Mat measurement = Mat::zeros(measureNum, 1, CV_32F);
+   Mat statePre;//预测矩阵
 
    float yaw1, pitch1;//要发送的角度（未滤波）
    float yaw0, pitch0;//储存最新的角度
-   yaw0 = 0;
-   pitch0 = 0;
 
    int fd = init_uart();//初始化串口
 
@@ -77,19 +76,25 @@ void * thread_serial(void *arg)
            measurement.at<float>(1) = pitch1;
            KF.correct(measurement);
 
-           temp_serial.send_angle[0] = KF.statePost.at<float>(0);
-           temp_serial.send_angle[1] = KF.statePost.at<float>(1);
+           //发送状态值
+           //temp_serial.send_angle[0] = KF.statePost.at<float>(0);
+           //temp_serial.send_angle[1] = KF.statePost.at<float>(1);
+           //send_angle(fd, temp_serial.send_angle);
+
+           //发送预测值
+
+           int code = 9;
+           statePre = KF.transitionMatrix*KF.statePost;
+           temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
+           temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
            send_angle(fd, temp_serial.send_angle);
 
-           //graph(M_graph, yaw0, temp_serial.send_angle[0], yaw1, num);
-           //imshow("graph", M_graph);
 
        }
        else
        {
            pthread_mutex_unlock(&mutex);
        }
-
 
        //cout << "recive:  yaw: " << temp_serial.recive_angle[0] << " pitch: " << temp_serial.solve_angle[0] << endl;
        //cout << "solve:  yaw: " << temp_serial.solve_angle[0]<< " pitch: " << temp_serial.solve_angle[1] << endl;

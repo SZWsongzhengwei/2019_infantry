@@ -46,7 +46,9 @@ int main()
         Armorfind armor;
         cap >> frame;
         vector<Point2f>  points;
-        points =armor.Armorfinds(frame, img_hsv, img_gray);
+        bool label=0;
+        points =armor.Armorfinds(frame, img_hsv, img_gray,label);
+        cout<<"种类"<<label<<endl;
         //double FPS;
         if (!points.empty())
         {
@@ -67,8 +69,8 @@ int main()
         double duration =1/((getTickCount()-start)/getTickFrequency());
         cout<<duration<<endl;
         if((char)waitKey(5)=='q')
-        {
-            //cap.closeStream();
+       {
+            cap.closeStream();
             break;
         }
     }
