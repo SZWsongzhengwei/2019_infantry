@@ -57,8 +57,8 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
     RectArmor(src, armor_points);
    //resize(src, src, Size(1280, 720));
   imshow("picutre_text1",src);
-  imshow("picutre_text2", img_gray);
-  imshow("picutre_text3", text1);
+  //imshow("picutre_text2", img_gray);
+  //imshow("picutre_text3", text1);
   //imshow("picutre_text4", text2);
     armorclear();
     return armor_points;

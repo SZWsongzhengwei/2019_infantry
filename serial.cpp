@@ -10,9 +10,9 @@ pthread_mutex_t mutex;
 void * thread_serial(void *arg)
 {
 
-    //int num = 25;
-    //Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
-    //namedWindow("graph");
+    int num = 25;
+    Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
+    namedWindow("graph");
 
    serial_data temp_serial;
    temp_serial.status = 0x00;
@@ -57,7 +57,6 @@ void * thread_serial(void *arg)
    char temp_color[4];
    char temp_angle[11];
 
-
    while(1)
    {
        const int64 start = getTickCount();
@@ -83,18 +82,20 @@ void * thread_serial(void *arg)
 
            //发送预测值
 
-           int code = 9;
-           statePre = KF.transitionMatrix*KF.statePost;
+           int code = 1;
            temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
            temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
            send_angle(fd, temp_serial.send_angle);
 
-
+           graph(M_graph, temp_serial.recive_angle[0], temp_serial.send_angle[0], KF.statePost.at<float>(0), num);
+           imshow("graph", M_graph);
+           waitKey(3);
        }
        else
        {
            pthread_mutex_unlock(&mutex);
        }
+
 
        //cout << "recive:  yaw: " << temp_serial.recive_angle[0] << " pitch: " << temp_serial.solve_angle[0] << endl;
        //cout << "solve:  yaw: " << temp_serial.solve_angle[0]<< " pitch: " << temp_serial.solve_angle[1] << endl;

@@ -60,9 +60,6 @@ int main()
             //cout << "send:  yaw1: " << yaw1 << " pitch1: " << pitch1 << endl;
             //cout << "pre:  yaw_pre: " << yaw_pre<< " pitch_pre: " << pitch_pre << endl;
             //cout << "state:  yaw_state: " << yaw_state<< " pitch_state: " << pitch_state << endl;
-
-
-
         }
         //cout<<exp<<endl;
         //imshow("graph", M_graph);
