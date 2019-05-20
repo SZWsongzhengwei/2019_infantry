@@ -2,7 +2,7 @@
 
 
 int AST::Mode = 1;
-int AST::capmode = 1;
+int AST::armormode = 1;
 float AST::light_min_sizes = 0.2;
 float AST::light_max_sizes = 5.0;//灯条长宽比的值
 float AST::light_min_areas = 0.5;//灯条外包矩形和轮廓的比值

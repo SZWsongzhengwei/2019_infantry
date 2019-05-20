@@ -82,14 +82,14 @@ void * thread_serial(void *arg)
 
            //发送预测值
 
-           int code = 1;
+           int code = 7;
            temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
            temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
            send_angle(fd, temp_serial.send_angle);
 
-           graph(M_graph, temp_serial.recive_angle[0], temp_serial.send_angle[0], KF.statePost.at<float>(0), num);
-           imshow("graph", M_graph);
-           waitKey(3);
+           //graph(M_graph, temp_serial.recive_angle[0], temp_serial.send_angle[0], KF.statePost.at<float>(0), num);
+           //imshow("graph", M_graph);
+           //waitKey(3);
        }
        else
        {

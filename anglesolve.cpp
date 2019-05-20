@@ -29,7 +29,7 @@ double fy = M_[1][1];
 double cx = M_[0][2];
 double cy = M_[1][2];
 
-Point2f angle_solve(vector<Point2f> amor_4points, float &yaw, float &pitch)
+Point2f angle_solve(vector<Point2f> amor_4points, float &yaw, float &pitch, int armor_mode)
 {
     double max_pixel_distance = point_distance(amor_4points[3], amor_4points[0]);
     double temp_distance;
@@ -40,9 +40,8 @@ Point2f angle_solve(vector<Point2f> amor_4points, float &yaw, float &pitch)
         {
             max_pixel_distance = temp_distance;
         }
-
     }
-    double distance = distance_solve(max_pixel_distance);
+    double distance = distance_solve(max_pixel_distance, armor_mode);
     //double distance = 1000;
     Point2f target_point = target_solve(distance);
 
@@ -59,12 +58,20 @@ Point2f angle_solve(vector<Point2f> amor_4points, float &yaw, float &pitch)
     return amor_point;
 }
 
-double distance_solve(double pixel_distance)
+double distance_solve(double pixel_distance, int armor_mode)
 {
-    double object_distance = LIGHT_LENGTH;
+    double object_distance;
+    if(armor_mode == 1)
+    {
+        object_distance = SMALL_ARMOR_WIDTH;
+    }
+    else
+    {
+        object_distance = BIG_ARMOR_WIDTH;
+    }
     //小孔成像原理测距
-    double distance = (fy * object_distance) / pixel_distance;
-    //cout <<"distance:"<< distance << endl;
+    double distance = (fx * object_distance) / pixel_distance;
+    cout <<"distance:"<< distance << "mm" << endl;
     return distance;
 }
 
@@ -74,7 +81,7 @@ Point2f target_solve(double distance)
     double camera_height = CAMERA_HEIGHT;
     double camera_fix_x = FIX_X;
     target_point.x = cx + camera_fix_x;
-    target_point.y = cy + camera_height * fy / distance;
+    target_point.y = cy +camera_height*fy/distance-5;
 
     return target_point;
 }

@@ -13,10 +13,10 @@ class AST
 
 public:
     /*
-    mode =1;单目
-    mode=51;双目
+    mode =1;小装甲板：步兵，工程
+    mode=11;大装甲板：英雄，哨兵
     */
-    static int capmode;
+    static int armormode;
     /*
     Mode =0;在红方时打开自瞄
     Mode =1;在蓝方时打开自瞄

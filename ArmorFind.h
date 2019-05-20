@@ -8,7 +8,7 @@
 #include<chrono>
 #include <string>
 #include<algorithm>
-
+#include"ArmorSet.h"
 using namespace std;
 using namespace cv;
 

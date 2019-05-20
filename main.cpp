@@ -18,7 +18,6 @@ int main()
 
     pthread_mutex_init(&mutex, NULL);
     pthread_t serial_tid;
-    sleep(2);
 
     int err = pthread_create(&serial_tid, NULL, thread_serial, NULL);
     if(err!=0)
@@ -29,7 +28,7 @@ int main()
     float yaw, pitch;
     Point2f center_point;
     AST::Mode = 1;
-    AST::capmode = 1;
+    AST::armormode = 11;
 
     RMVideoCapture cap("/dev/video0",3);
     cap.setVideoFormat(640,480,1);
@@ -48,18 +47,11 @@ int main()
         vector<Point2f>  points;
         bool label=0;
         points =armor.Armorfinds(frame, img_hsv, img_gray,label);
-        cout<<"种类"<<label<<endl;
         //double FPS;
         if (!points.empty())
         {
-            center_point = angle_solve(points, yaw, pitch);
+            center_point = angle_solve(points, yaw, pitch,AST::armormode);
             updata_angle(yaw, pitch);
-
-            //cout << "recive:  yaw0: " << yaw0 << " pitch0: " << pitch0 << endl;
-            //cout << "solve:  yaw: " << yaw << " pitch: " << pitch << endl;
-            //cout << "send:  yaw1: " << yaw1 << " pitch1: " << pitch1 << endl;
-            //cout << "pre:  yaw_pre: " << yaw_pre<< " pitch_pre: " << pitch_pre << endl;
-            //cout << "state:  yaw_state: " << yaw_state<< " pitch_state: " << pitch_state << endl;
         }
         //cout<<exp<<endl;
         //imshow("graph", M_graph);
@@ -69,7 +61,7 @@ int main()
        {
             cap.closeStream();
             break;
-        }
+       }
     }
     return 0;
 
