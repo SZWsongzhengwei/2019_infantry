@@ -1,6 +1,5 @@
 #include"ArmorFind.h"
 #include "ArmorSet.h"
-#include "MyKalman.h"
 #include "anglesolve.h"
 #include<RMVideoCapture.h>
 #include <chrono>
@@ -28,7 +27,7 @@ int main()
     float yaw, pitch;
     Point2f center_point;
     AST::Mode = 1;
-    AST::armormode = 11;
+    AST::armormode = 1;
 
     RMVideoCapture cap("/dev/video0",3);
     cap.setVideoFormat(640,480,1);
@@ -60,6 +59,9 @@ int main()
         if((char)waitKey(5)=='q')
        {
             cap.closeStream();
+            pthread_mutex_lock(&mutex);
+            serial_over = 0;
+            pthread_mutex_unlock(&mutex);
             break;
        }
     }

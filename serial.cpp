@@ -5,10 +5,16 @@ float_char angle_transform;//transform hex and float
 
 //互斥锁
 serial_data serial;
+
 pthread_mutex_t mutex;
+
+bool serial_over;
 
 void * thread_serial(void *arg)
 {
+    pthread_mutex_lock(&mutex);
+    serial_over = 1;
+    pthread_mutex_unlock(&mutex);
 
     int num = 25;
     Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
@@ -59,6 +65,13 @@ void * thread_serial(void *arg)
 
    while(1)
    {
+       pthread_mutex_lock(&mutex);
+       if(serial_over == 0)
+       {
+           break;
+       }
+       pthread_mutex_unlock(&mutex);
+
        const int64 start = getTickCount();
        //检查角度更新，若更新则需要发送
        pthread_mutex_lock(&mutex);
@@ -108,7 +121,6 @@ void * thread_serial(void *arg)
        for(int i = 0; i < read_num; i++)
        {
            deal_buff[deal_num + i] = read_buff[i];
-           //cout<<hex<<(int)read_buff[i] <<endl;
        }
        deal_num += read_num;
 
@@ -175,7 +187,6 @@ void * thread_serial(void *arg)
                            }
                            break;
                        case 0x03:
-                       //cout<<"03"<<endl;
                            //判断数据是否完整
                            if(temp_num > 10)
                            {
@@ -188,9 +199,8 @@ void * thread_serial(void *arg)
                                //开始校验
                                if(check_sum(temp_angle, 11) == 1)
                                {
-
+                                   cout<<"recive data"<<endl;
                                    //将16进制转化为float
-
                                    angle_transform.ch[0] = temp_angle[2];
                                    angle_transform.ch[1] = temp_angle[3];
                                    angle_transform.ch[2] = temp_angle[4];
@@ -206,7 +216,7 @@ void * thread_serial(void *arg)
                                    recive_angle_buff.resize(recive_angle_buff_num);
                                    temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
                                    temp_serial.recive_angle[1] = recive_angle_buff[recive_angle_buff_num-1];
-
+                                    cout<<"recive data"<<endl;
                                }
                            }
                            else
@@ -251,6 +261,7 @@ void * thread_serial(void *arg)
        double duration =(getTickCount()-start)/getTickFrequency()*1000;
        //cout<<duration<<endl;
    }
+   close(fd);
    return (void*)0;
 }
 
@@ -372,15 +383,37 @@ void send_angle(int fd, float s_angle[2])
    send_char[8] = angle_transform.ch[2];
    send_char[9] = angle_transform.ch[3];
 
-   //设置和校验位r
-   int sum = 0;
+   //设置和校验位
+   char sum = 0;
    for(int i = 0; i<10; i++)
    {
        sum +=send_char[i];
    }
    send_char[10] = sum&0xFF;
-
-
     write(fd, send_char, 11);
 }
 
+void send_reply(int fd, int id)
+{
+    char reply[4];
+    reply[0] = 0XA5;
+    if(id == 1)
+    {
+        reply[1]=0X01;
+    }
+    if(id==2)
+    {
+        reply[1]=0X02;
+    }
+    reply[2]=0X06;
+    //设置和校验位
+    int sum = 0;
+    for(int i = 0; i<3; i++)
+    {
+        sum +=reply[i];
+    }
+    reply[3] = sum&0xFF;
+
+    write(fd, reply, 4);
+
+}

@@ -13,7 +13,7 @@
 #include <pthread.h> //线程库   需要加LIB
 #include <opencv2/opencv.hpp>
 
-#define UART_DEVICE "/dev/ttyUSB0"
+#define UART_DEVICE "/dev/ttyTHS1"
 #define ANGLE_BUFF_NUM  20 //缓存角度的个数，读取的是之前的多少个的角度
 
 using namespace std;
@@ -35,6 +35,7 @@ struct serial_data
 };
 
 //互斥锁
+extern bool serial_over;
 extern serial_data serial;
 extern pthread_mutex_t mutex;
 
@@ -83,6 +84,12 @@ void send_angle(int fd, float s_angle[2]);
 /*@brief 发送坐标位置，将三个float变为12个字符再加上1个ID输出
  * @param fd   类型 int  串口名称
  * @param XYZ   类型 float数组   要发送的一个坐标
+*/
+
+void send_reply(int fd, int id);
+/*@brief 发送坐标位置，将三个float变为12个字符再加上1个ID输出
+ * @param fd   类型 int  串口名称
+ * @param id   类型 int  回复的类型，1为状态回复，2为颜色回复
 */
 
 #endif // SERIAL_H

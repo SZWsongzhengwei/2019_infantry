@@ -1,7 +1,7 @@
 #include "ArmorFind.h"
 #include "ArmorSet.h"
 #include <math.h>
-#define hsv_threshold 100
+#define hsv_threshold 60
 #define big_armor_highest 6.35
 #define big_armor_lowest 4.55
 Armorfind::Armorfind()
@@ -22,10 +22,10 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
 {
 
     namedWindow("picutre_text1");
-    //namedWindow("picutre_text2");
-    //namedWindow("picutre_text3");
-    //namedWindow("picutre_text4");
-     //   Mat text(480, 640,CV_8UC1,Scalar(0));
+    namedWindow("picutre_text2");
+    namedWindow("picutre_text3");
+    namedWindow("picutre_text4");
+        Mat text(480, 640,CV_8UC1,Scalar(0));
         Mat text1(480, 640, CV_8UC1, Scalar(0));
         Mat text2(480, 640, CV_8UC1, Scalar(0));
         /*准备工作*/
@@ -58,9 +58,9 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
     RectArmor(src, armor_points);
    //resize(src, src, Size(1280, 720));
   imshow("picutre_text1",src);
-  //imshow("picutre_text2", img_gray);
-  //imshow("picutre_text3", text1);
-  //imshow("picutre_text4", text2);
+  imshow("picutre_text2", img_gray);
+  imshow("picutre_text3", text1);
+  imshow("picutre_text4", text2);
     armorclear();
     return armor_points;
 
@@ -144,7 +144,8 @@ vector<RotatedRect> Armorfind::ArmorRects(Mat src, vector<vector<Point>> Armorco
                     {
                         if (s_fitEllipse.size.height > 5&&s_fitEllipse.size.height<100 )
                         {
-                          if (Armorflags)
+
+                            if (Armorflags)
                             {
                                 ArmorRect.push_back(s);
                             }
@@ -563,7 +564,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                     {
                       if((parallel_index>1&&parallel_index<3.55))
                          {
-                            if(angle_index<15)
+                            if(angle_index<10)
                             {
                                  armor_label =0;
                                  j=i;
