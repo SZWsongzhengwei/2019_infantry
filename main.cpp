@@ -42,9 +42,10 @@ int main()
         Mat frame;
         Mat img_hsv, img_gray;
         Armorfind armor;
-        cap >> frame;
         vector<Point2f>  points;
         bool label=0;
+        cap >> frame;
+
         points =armor.Armorfinds(frame, img_hsv, img_gray,label);
         //double FPS;
         if (!points.empty())
@@ -52,10 +53,9 @@ int main()
             center_point = angle_solve(points, yaw, pitch,AST::armormode);
             updata_angle(yaw, pitch);
         }
-        //cout<<exp<<endl;
-        //imshow("graph", M_graph);
         double duration =1/((getTickCount()-start)/getTickFrequency());
         cout<<duration<<endl;
+
         if((char)waitKey(5)=='q')
        {
             cap.closeStream();
