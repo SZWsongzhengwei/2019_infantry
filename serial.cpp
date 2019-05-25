@@ -1,14 +1,13 @@
 #include "serial.h"
 #include "graph.h"
 
-float_char angle_transform;//transform hex and float
+float_char angle_transform;//用于转换hex和flaot
 
+serial_data serial;//全局变量，用于线程间数据交互
 //互斥锁
-serial_data serial;
-
 pthread_mutex_t mutex;
 
-bool serial_over;
+bool serial_over;//判断主线程是否结束，结束时要关闭串口
 
 void * thread_serial(void *arg)
 {
@@ -16,20 +15,36 @@ void * thread_serial(void *arg)
     serial_over = 1;
     pthread_mutex_unlock(&mutex);
 
-    int num = 25;
-    Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
-    namedWindow("graph");
+   int num = 25;
+   Mat M_graph(750, 1200, CV_8UC3, Scalar(255, 255, 255));
+   namedWindow("graph");
 
+    //初始化全局信息
+    pthread_mutex_lock(&mutex);
+    serial.status = 0x05;
+    serial.color = 0x02;
+    serial.solve_angle[0] = 0;
+    serial.solve_angle[1] = 0;
+    serial.recive_angle[0] = 0;
+    serial.recive_angle[1] = 0;
+    serial.send_angle[0] = 0;
+    serial.send_angle[1] = 0;
+    serial.time_num = 20;
+    pthread_mutex_unlock(&mutex);
+
+   //初始化局部信息
    serial_data temp_serial;
-   temp_serial.status = 0x00;
-   temp_serial.color = 0x00;
+   temp_serial.status = 0x05;
+   temp_serial.color = 0x02;
    temp_serial.solve_angle[0] = 0;
    temp_serial.solve_angle[1] = 0;
    temp_serial.recive_angle[0] = 0;
    temp_serial.recive_angle[1] = 0;
    temp_serial.send_angle[0] = 0;
    temp_serial.send_angle[1] = 0;
+   temp_serial.time_num = 20;
 
+   //卡尔曼滤波初始化
    RNG rng;
    const int stateNum=4;
    const int measureNum=2;
@@ -37,14 +52,12 @@ void * thread_serial(void *arg)
    KF.transitionMatrix = (Mat_<float>(4,4) << 1,0,1,0,0,1,0,1,0,0,1,0,0,0,0,1);
    setIdentity(KF.measurementMatrix);
    setIdentity(KF.processNoiseCov, Scalar::all(1e-5));
-   setIdentity(KF.measurementNoiseCov, Scalar::all(1e-2));
+   setIdentity(KF.measurementNoiseCov, Scalar::all(5*(1e-3)));
    setIdentity(KF.errorCovPost, Scalar::all(1));
    rng.fill(KF.statePost, RNG::UNIFORM,-10,10);
    Mat measurement = Mat::zeros(measureNum, 1, CV_32F);
-   Mat statePre;//预测矩阵
 
    float yaw1, pitch1;//要发送的角度（未滤波）
-   float yaw0, pitch0;//储存最新的角度
 
    int fd = init_uart();//初始化串口
 
@@ -56,7 +69,7 @@ void * thread_serial(void *arg)
    int cut_num = 0;//被截断的字节个数
    int temp_num = 0;//储存字节中0xA5后面的字节的数量，包括0xA5，用于判断字节是否完整
    int recive_angle_buff_num = ANGLE_BUFF_NUM*2;
-   vector<float> recive_angle_buff(recive_angle_buff_num, 0);
+   vector<float> recive_angle_buff(recive_angle_buff_num, 0);//储存接收到的多个角度
 
    //储存提取的数据，用于校验
    char temp_status[4];
@@ -68,11 +81,16 @@ void * thread_serial(void *arg)
        pthread_mutex_lock(&mutex);
        if(serial_over == 0)
        {
+           pthread_mutex_unlock(&mutex);
            break;
        }
-       pthread_mutex_unlock(&mutex);
+       else
+       {
+            pthread_mutex_unlock(&mutex);
+       }
 
-       const int64 start = getTickCount();
+
+       //const int64 start = getTickCount();
        //检查角度更新，若更新则需要发送
        pthread_mutex_lock(&mutex);
        if(temp_serial.solve_angle[0] != serial.solve_angle[0] || abs(temp_serial.solve_angle[1] != serial.solve_angle[1]) > 0.1)
@@ -80,41 +98,41 @@ void * thread_serial(void *arg)
            KF.predict();
            temp_serial.solve_angle[0] = serial.solve_angle[0];
            temp_serial.solve_angle[1] = serial.solve_angle[1];
+           temp_serial.time_num = serial.time_num;
            pthread_mutex_unlock(&mutex);
 
-           yaw1 = temp_serial.recive_angle[0]+temp_serial.solve_angle[0];
-           pitch1 = temp_serial.recive_angle[1]+temp_serial.solve_angle[1];
+           //判断
+           if(temp_serial.time_num + 1 > ANGLE_BUFF_NUM)
+           {
+               temp_serial.time_num = ANGLE_BUFF_NUM;
+           }
+
+           yaw1 = temp_serial.solve_angle[0]+recive_angle_buff[temp_serial.time_num*2];
+           pitch1 = temp_serial.solve_angle[1]+recive_angle_buff[temp_serial.time_num*2+1];
+
            measurement.at<float>(0) = yaw1;
            measurement.at<float>(1) = pitch1;
            KF.correct(measurement);
 
            //发送状态值
-           //temp_serial.send_angle[0] = KF.statePost.at<float>(0);
-           //temp_serial.send_angle[1] = KF.statePost.at<float>(1);
-           //send_angle(fd, temp_serial.send_angle);
-
-           //发送预测值
-
-           int code = 7;
-           temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
-           temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
+           temp_serial.send_angle[0] = KF.statePost.at<float>(0);
+           temp_serial.send_angle[1] = KF.statePost.at<float>(1);
            send_angle(fd, temp_serial.send_angle);
 
-           //graph(M_graph, temp_serial.recive_angle[0], temp_serial.send_angle[0], KF.statePost.at<float>(0), num);
+           //发送预测值
+           //int code = 4;
+           //temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
+           //temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
+           //send_angle(fd, temp_serial.send_angle);
+
+           //graph(M_graph, yaw1, temp_serial.send_angle[0], 0, num);
            //imshow("graph", M_graph);
-           //waitKey(3);
+
        }
        else
        {
            pthread_mutex_unlock(&mutex);
        }
-
-
-       //cout << "recive:  yaw: " << temp_serial.recive_angle[0] << " pitch: " << temp_serial.solve_angle[0] << endl;
-       //cout << "solve:  yaw: " << temp_serial.solve_angle[0]<< " pitch: " << temp_serial.solve_angle[1] << endl;
-       //cout << "send:  yaw: " << temp_serial.send_angle[0] << " pitch: " << temp_serial.send_angle[0] << endl;
-       //cout << "send:  yaw: " << yaw1 << " pitch: " << pitch1 << endl;
-
 
        //将读到的字节存进缓冲区，如果缓冲区有遗留字节则直接在后面加上
        read_num = read(fd, read_buff, 15);
@@ -174,6 +192,7 @@ void * thread_serial(void *arg)
                                if(check_sum(temp_color, 4) == 1)
                                {
                                    temp_serial.color = temp_color[2];
+                                   cout<<"阵营："<<hex<<(int)temp_serial.color<<endl;
                                }
                            }
                            else
@@ -199,24 +218,20 @@ void * thread_serial(void *arg)
                                //开始校验
                                if(check_sum(temp_angle, 11) == 1)
                                {
-                                   cout<<"recive data"<<endl;
                                    //将16进制转化为float
                                    angle_transform.ch[0] = temp_angle[2];
                                    angle_transform.ch[1] = temp_angle[3];
                                    angle_transform.ch[2] = temp_angle[4];
                                    angle_transform.ch[3] = temp_angle[5];
-                                   yaw0 = angle_transform.fl;
+                                   temp_serial.recive_angle[0] = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+0, angle_transform.fl);
                                    angle_transform.ch[0] = temp_angle[6];
                                    angle_transform.ch[1] = temp_angle[7];
                                    angle_transform.ch[2] = temp_angle[8];
                                    angle_transform.ch[3] = temp_angle[9];
-                                   pitch0 = angle_transform.fl;
+                                   temp_serial.recive_angle[1] = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+1, angle_transform.fl);
                                    recive_angle_buff.resize(recive_angle_buff_num);
-                                   temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
-                                   temp_serial.recive_angle[1] = recive_angle_buff[recive_angle_buff_num-1];
-                                    cout<<"recive data"<<endl;
                                }
                            }
                            else
@@ -258,8 +273,8 @@ void * thread_serial(void *arg)
            deal_num = cut_num;
            cut_num = 0;
        }
-       double duration =(getTickCount()-start)/getTickFrequency()*1000;
-       //cout<<duration<<endl;
+       //double deal_time = (getTickCount()-start)/getTickFrequency();
+       //cout<<"串口线程执行时间："<<deal_time*1000<<"ms"<<endl;
    }
    close(fd);
    return (void*)0;
@@ -312,13 +327,14 @@ int init_uart()
    return fd;
 }
 
-void updata_angle(float yaw, float pitch)
+void updata_angle(float yaw, float pitch, int time_num)
 {
-   pthread_mutex_lock(&mutex);
-   serial.solve_angle[0] = yaw;
-   serial.solve_angle[1] = pitch;
-   pthread_mutex_unlock(&mutex);
-}
+    pthread_mutex_lock(&mutex);
+    serial.solve_angle[0] = yaw;
+    serial.solve_angle[1] = pitch;
+    serial.time_num = time_num;
+    pthread_mutex_unlock(&mutex);
+ }
 
 void get_angle(float &yaw, float &pitch)
 {
@@ -390,7 +406,8 @@ void send_angle(int fd, float s_angle[2])
        sum +=send_char[i];
    }
    send_char[10] = sum&0xFF;
-    write(fd, send_char, 11);
+   write(fd, send_char, 11);
+
 }
 
 void send_reply(int fd, int id)

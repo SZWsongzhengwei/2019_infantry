@@ -1,9 +1,9 @@
 #include "ArmorFind.h"
 #include "ArmorSet.h"
 #include <math.h>
-#define hsv_threshold 60
-#define big_armor_highest 6.35
-#define big_armor_lowest 4.55
+#define hsv_threshold 70
+#define big_armor_highest 4.85
+#define big_armor_lowest 3
 Armorfind::Armorfind()
 {
 }
@@ -22,9 +22,9 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
 {
 
     namedWindow("picutre_text1");
-    //namedWindow("picutre_text2");
-    //namedWindow("picutre_text3");
-    //namedWindow("picutre_text4");
+    namedWindow("picutre_text2");
+    namedWindow("picutre_text3");
+    namedWindow("picutre_text4");
         Mat text(480, 640,CV_8UC1,Scalar(0));
         Mat text1(480, 640, CV_8UC1, Scalar(0));
         Mat text2(480, 640, CV_8UC1, Scalar(0));
@@ -32,7 +32,7 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
         img_gray = p_img(src);
     findContours(img_gray, Armorcoutour, RETR_EXTERNAL, CHAIN_APPROX_NONE);
     ArmorRects(src, Armorcoutour);//11ms
-  // RectArmorss(ArmorRect, text1);
+   RectArmorss(ArmorRect, text1);
    //Armorstrict(ArmorRect_real, ArmorRect,src);
     if (!Armorstrict(ArmorRect_real, ArmorRect,img_hsv))
     {
@@ -43,7 +43,7 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
     /*画出可能的装甲对（可注释）*/
 
     all_points =ALLpoint(RectChoose, text2);
-/*    for (size_t i = 0; i < all_points.size(); i++)
+  for (size_t i = 0; i < all_points.size(); i++)
     {
         Point2f vertices[4];
         vertices[0] = all_points[i][0];
@@ -53,14 +53,14 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
         for (int i = 0; i < 4; i++)
        line(text2, vertices[i], vertices[(i + 1) % 4], Scalar(255));
     }
-    */
+
     armor_points = high_chooses(all_points,labels);
     RectArmor(src, armor_points);
-   //resize(src, src, Size(1280, 720));
+  // resize(src, src, Size(1280, 720));
   imshow("picutre_text1",src);
-  //imshow("picutre_text2", img_gray);
-  //imshow("picutre_text3", text1);
-  //imshow("picutre_text4", text2);
+  imshow("picutre_text2", img_gray);
+  imshow("picutre_text3", text1);
+  imshow("picutre_text4", text2);
     armorclear();
     return armor_points;
 
@@ -108,7 +108,7 @@ Mat Armorfind::p_img(Mat& src)
     threshold(out, out,hsv_threshold , 255, THRESH_BINARY);
     element1 = getStructuringElement(MORPH_RECT, Size(1, 5));
     erode(out, out, element1);
-    element2 = getStructuringElement(MORPH_RECT, Size(5, 9));
+    element2 = getStructuringElement(MORPH_RECT, Size(3, 7));
 
     dilate(out, out, element2);
 
@@ -158,7 +158,7 @@ vector<RotatedRect> Armorfind::ArmorRects(Mat src, vector<vector<Point>> Armorco
                 break;
         }
 
-      //  cout << ArmorRect.size() << endl;
+        cout << ArmorRect.size() << endl;
 
     }
     return ArmorRect_real;
@@ -201,45 +201,51 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
                                     ArmorRect[NI].points(rect1);
                                     ArmorRect[NL].points(rect2);
                                     float area_size= ArmorRect[NI].size.area() /ArmorRect[NL].size.area() ;
-
-                                    if(AST::Mode == 0)
+                                    if(dis_armor>20)
+                         {
+                                   if(AST::Mode == 0)
                                     {
-                                     if (angle_dis<5)//平行度
-                                     {
-                                         if(AST::armormode == 1)
-                                          {
-                                              if((dis>1.1&&dis<5.85))
-                                                {
-                                                  if(area_size>0.2&&area_size<5)
+                                       if(AST::armormode == 1)
+                                        {
+                                           if (angle_dis<15)//平行度
+                                           {
+                                            if((dis>1.1&&dis<6.35))
+                                              {
+                                                if(area_size>0.2&&area_size<5)
+                                                  {
+                                                       realarmor.first = ArmorRect[NI];
+                                                       realarmor.second = ArmorRect[NL];
+                                                       RectChoose.push_back(realarmor);
+                                                  }
+                                              }
+                                        }
+                                       }
+                                        else if(AST::armormode ==11)
+                                        {
+                                           if (angle_dis<10)//平行度
+                                           {
+                                              if((dis>3.1&&dis<7.1))
+                                              {
+                                                  if(area_size>0.4&&area_size<2.5)
                                                     {
-                                                         realarmor.first = ArmorRect[NI];
-                                                         realarmor.second = ArmorRect[NL];
-                                                         RectChoose.push_back(realarmor);
-                                                    }
-                                                }
-                                          }
-                                          else if(AST::armormode ==11)
-                                          {
-                                                if((dis>6.1&&dis<13))
-                                                {
-                                                    if(area_size>0.4&&area_size<2.5)
-                                                      {
-                                                        realarmor.first = ArmorRect[NI];
-                                                        realarmor.second = ArmorRect[NL];
-                                                        RectChoose.push_back(realarmor);
-                                                       }
-                                                }
-                                         }
-                                     }
+                                                      realarmor.first = ArmorRect[NI];
+                                                      realarmor.second = ArmorRect[NL];
+                                                      RectChoose.push_back(realarmor);
+                                                     }
+                                              }
+                                       }
+                                       }
+                                   }
 
-                                    }
+
                                    else  if(AST::Mode == 1)
                                     {
-                                        if (angle_dis<10)//平行度
-                                        {
+
                                             if(AST::armormode == 1)
                                              {
-                                                 if((dis>1.1&&dis<5.85))
+                                               if (angle_dis<10)//平行度
+                                                {
+                                                 if((dis>1.1&&dis<6.35))
                                                    {
                                                      if(area_size>0.2&&area_size<5)
                                                        {
@@ -249,9 +255,12 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
                                                        }
                                                    }
                                              }
+                                            }
                                              else if(AST::armormode ==11)
                                              {
-                                                   if((dis>6.1&&dis<13))
+                                                if (angle_dis<15)//平行度
+                                                {
+                                                   if((dis>3.1&&dis<7.1))
                                                    {
                                                        if(area_size>0.4&&area_size<2.5)
                                                          {
@@ -261,9 +270,11 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
                                                           }
                                                    }
                                             }
+                                            }
                                         }
-                                     }
-                                }
+
+                          }
+                            }
                         }
                 }
         }
@@ -273,6 +284,7 @@ bool Armorfind::Armorstrict(vector<RotatedRect>  realarmor, vector<RotatedRect> 
     else
         return 1;
 }
+
 /*
 * @brief 清除函数
 * @
@@ -286,6 +298,7 @@ void Armorfind::armorclear()
 //	armor_points.clear();
     all_points.clear();
 }
+
 /*
 * @brief 画出矩形/调试
 */
@@ -307,6 +320,7 @@ void Armorfind::RectArmorss(vector<RotatedRect> Rect, Mat src)
 
     }
 }
+
 /*
 * @brief 画出矩形/调试
 */
@@ -322,6 +336,7 @@ void Armorfind::RectArmor(Mat src,vector<Point2f>points)
    else
         cout<<"nmsl"<<endl;
 }
+
 /*
 * @brief 颜色选择层
 */
@@ -337,7 +352,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         R = src.at<Vec3b>(pt)[2];
         if (AST::Mode == 0)
         {
-            if ((B - R > 10)&&(G<200))
+            if ((B - R > 40))
             {
                 return 1;
             }
@@ -348,7 +363,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         }
         else if (AST::Mode == 1)
         {
-            if( (R-B>10) &&(G<200))
+            if( (R-B>40)&&(G<200))
             {
                 return 1;
             }
@@ -363,6 +378,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         return 0;
 }
 }
+
 /*
 * @brief 返回所有矩形
 * @brief 将矩形按12  分布
@@ -435,6 +451,7 @@ vector<vector<Point2f>> Armorfind::ALLpoint(vector<pair<RotatedRect, RotatedRect
     }
     return points_4;
 }
+
 /*
 *@brief 宽松匹配，当严格匹配无法识别时进行补偿
 */
@@ -461,7 +478,7 @@ bool Armorfind::Armorloose(vector<RotatedRect>  realarmor, vector<RotatedRect> A
                // float dis_light = (ArmorRect[NI].size.height + ArmorRect[NL].size.height) / 2;
               double angle_dis =abs(atan((ArmorRect[NI].center.y- ArmorRect[NL].center.y) / (ArmorRect[NI].center.x - ArmorRect[NL].center.x))*180/PI);
                 //double dis_angle = abs(ArmorRect[NI].angle - ArmorRect[NL].angle);
-                if (angle_dis < 5)
+                if (angle_dis < 10)
                 {
                     realarmor.first = ArmorRect[NI];
                     realarmor.second = ArmorRect[NL];
@@ -474,6 +491,7 @@ bool Armorfind::Armorloose(vector<RotatedRect>  realarmor, vector<RotatedRect> A
     }
     return 1;
 }
+
 /*dou
 * @brief 图像处理层面抉择
 *
@@ -488,6 +506,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
     {
         int j=0;
             float Grade = 0;
+            float best_angle;
         for (size_t i = 0; i < ptss.size(); i++)
         {
             cout << "第" << i << "个:" << ptss[i].size() << endl;
@@ -496,7 +515,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
      //           float rect_index = 0;//矩形参数
                 float parallel_index = 0;//平行参数
                 float area_index = 0;//mj参数
-                float angle_index = 20;//长宽比参数
+                float angle_index = 30;//长宽比参数
                 float center_index =0;
 
         /*        /*矩形拟合参数*/
@@ -550,7 +569,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                 */
                 area_index =parallel_indexs[0] *parallel_indexs[1]/4+parallel_indexs[1] *parallel_indexs[2]/4+parallel_indexs[2] *parallel_indexs[3]/4+parallel_indexs[3] *parallel_indexs[1]/4;
 
-                Grade =
+                Grade =area_index+
                 center_index;
                  //   + 4 * (1 - abs(0.1 - lwr_index))
                     ;
@@ -562,10 +581,11 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                 {
                          if (Grade > best_grade)
                     {
-                      if((parallel_index>1&&parallel_index<3.55))
+                      if((parallel_index>1&&parallel_index<3.15))
                          {
-                            if(angle_index<10)
+                            if(angle_index<7.5)
                             {
+                                best_angle= angle_index;
                                  armor_label =0;
                                  j=i;
                                  best_grade = Grade;
@@ -577,9 +597,9 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                    {
                   if (Grade > best_grade)
                      {
-                        if((parallel_index>big_armor_lowest&&parallel_index<big_armor_highest))
+                       if((parallel_index>big_armor_lowest&&parallel_index<big_armor_highest))
                            {
-                              if(angle_index<15)
+                              if(angle_index<10)
                               {
                                    armor_label =0;
                                    j=i;
@@ -590,7 +610,7 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                   }
             }
         }
-
+cout<<"jiaodu"<<best_angle<<endl;
 
         if(best_grade !=0)
      last_armor = ptss[j];
